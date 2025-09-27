@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram Clone</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #000; /* qora fon */
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #fff;
+    }
+    .container {
+      width: 100%;
+      max-width: 400px;
+      background: #111;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      background: #0088cc;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0077b6;
+    }
+    #chat {
+      display: none;
+      flex-direction: column;
+      height: 400px;
+    }
+    #messages {
+      flex: 1;
+      list-style: none;
+      padding: 10px;
+      overflow-y: auto;
+      background: #222;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    #messages li {
+      background: #333;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      max-width: 70%;
+    }
+    #form {
+      display: flex;
+    }
+    #input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+    #form button {
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="auth">
+      <h2>Ro'yxatdan o'tish / Kirish</h2>
+      <input id="username" placeholder="Username" />
+      <input id="password" type="password" placeholder="Parol" />
+      <button onclick="register()">Ro'yxatdan o'tish</button>
+      <button onclick="login()">Kirish</button>
+    </div>
+
+    <div id="chat">
+      <ul id="messages"></ul>
+      <form id="form">
+        <input id="input" autocomplete="off" placeholder="Xabar yozing..." />
+        <button>Yuborish</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const authDiv = document.getElementById('auth');
+    const chatDiv = document.getElementById('chat');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const messages = document.getElementById('messages');
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+
+    async function register() {
+      const username = usernameInput.value;
+      const password = passwordInput.value;
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      alert(data.message);
+    }
+
+    async function login() {
+      const username = usernameInput.value;
+      const password = passwordInput.value;
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.message === "Kirish muvaffaqiyatli!") {
+        authDiv.style.display = 'none';
+        chatDiv.style.display = 'flex';
+      } else {
+        alert(data.message);
+      }
+    }
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
+      }
+    });
+
+    socket.on('chat message', function(msg) {
+      const item = document.createElement('li');
+      item.textContent = msg;
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    });
+  </script>
+</body>
+</html>
